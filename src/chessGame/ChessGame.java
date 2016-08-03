@@ -1,7 +1,10 @@
+
 package chessGame;
+
 import java.util.ArrayList;
 import java.util.Observable;
 
+import chessPieces.Blank;
 import chessPieces.Pieces;
 
 /*
@@ -36,7 +39,6 @@ import chessPieces.Pieces;
 
 public class ChessGame extends Observable {
 
-    private char[][] board;
     private Chess chess;
     private int colLength;
     public boolean isSelected;
@@ -44,9 +46,10 @@ public class ChessGame extends Observable {
     private int[] pieceHeld; // This will hold row and col location of piece
                              // held
 
-    private char[][] origBoard;
+    private Chess origBoard;
     private int rowLength;
     public boolean invalidMove = false;
+    public boolean noNextMove = false;
 
     /**
      * Constructor takes a chess board and creates a new one
@@ -61,39 +64,9 @@ public class ChessGame extends Observable {
         rowLength = this.chess.getRows();
         colLength = this.chess.getCols();
 
-        board = copyBoard( chess.getBoard() );
-
         // Copying original board retaining original for reset
-        origBoard = copyBoard( board );
+        origBoard = new Chess( chess );
 
-    }
-
-    /**
-     * This method will perform a deep copy of a board
-     * 
-     * @param oldBoard
-     *            - old board to copy
-     * @return char[][] - new board
-     */
-    public char[][] copyBoard( char[][] oldBoard ) {
-        int rows = oldBoard.length;
-        int cols = oldBoard[0].length;
-
-        char[][] newBoard = new char[rows][cols];
-
-        for ( int i = 0; i < rows; i++ ) {
-            for ( int j = 0; j < cols; j++ ) {
-                newBoard[i][j] = oldBoard[i][j];
-            }
-        }
-
-        return newBoard;
-
-    }
-
-    // Getter of board
-    public char[][] getBoard() {
-        return board;
     }
 
     // Getter of chess
@@ -119,10 +92,6 @@ public class ChessGame extends Observable {
     /**
      * This method will validate a move
      * 
-     * @param firstRow
-     *            - int index of row location of piece to move
-     * @param firstCol
-     *            - int index of col location of piece to move
      * @param secondRow
      *            - int index of row location of piece to move to
      * @param secondCol
@@ -136,7 +105,9 @@ public class ChessGame extends Observable {
 
             for ( int[][] iterate : solutions ) {
 
-                if ( iterate[0][0] == secondRow && iterate[0][1] == secondCol )
+                int firstRow = iterate[0][0];
+                int firstCol = iterate[0][1];
+                if ( firstRow == secondRow && firstCol == secondCol )
                     return true;
 
             }
@@ -163,27 +134,27 @@ public class ChessGame extends Observable {
      */
     public void movePiece( int secondRow, int secondCol ) {
 
-        // Make a copy of the board
+        // First piece selection positions
         int fRow = pieceHeld[0];
         int fCol = pieceHeld[1];
 
-        if ( chess.getBoard()[fRow][fCol] == '.' ) {
+        // Selecting the first piece validation
+        // Confirming not selecting empty space
+        if ( chess.getPieceOnBoard( fRow, fCol ) == null ) {
             invalidMove = true;
 
             setChanged();
             notifyObservers();
             invalidMove = false;
 
-
-            
             isSelected = false;
             return;
 
         }
-        char[][] newBoard = copyBoard( board );
 
         Pieces selectedPiece = selectPiece( fRow, fCol );
 
+        // Verifying piece to capture is a valid move
         if ( !isValid( selectedPiece, secondRow, secondCol ) ) {
 
             // If invalid toggle invalid move
@@ -199,19 +170,15 @@ public class ChessGame extends Observable {
 
         } else {
 
+            // Delete overtaken piece
+            chess.removePiece( secondRow, secondCol );
+
             // Assigning the piece a value on new board
-            chess.getPieceOnPos( newBoard, secondRow, secondCol );
-            selectedPiece.setPieceRow( secondRow );
-            selectedPiece.setPieceColumn( secondCol );
+            selectedPiece.setPiecePosition( secondRow, secondCol );
 
-            // Moving the piece
-            newBoard[secondRow][secondCol] = selectedPiece.getPieceChar();
-
-            // Deleting old piece
-            newBoard[fRow][fCol] = '.';
-
-            // Remaking board
-            board = copyBoard( newBoard );
+            // Remaking the board
+            chess.setBoardPiece(new Blank(chess, fRow, fCol), fRow, fCol);
+            chess.setBoardPiece(selectedPiece, secondRow, secondCol);
 
             // increment move count
             moveCount++;
@@ -233,19 +200,10 @@ public class ChessGame extends Observable {
     public void reset() {
 
         // Recopy old board
-        board = copyBoard( origBoard );
+        chess = new Chess( origBoard );
 
-        // Recopy chess board
-        chess.setBoardValues( copyBoard( origBoard ) );
-
-        // Reassign position values
-        for ( int i = 0; i < rowLength; i++ ) {
-            for ( int j = 0; j < colLength; j++ ) {
-                chess.getPieceOnPos( board, i, j );
-                chess.getPieceOnPos( chess.getBoard(), i, j );
-
-            }
-        }
+        // Redraw entire board
+        chess.redrawBoard();
 
         // reseting counters
         moveCount = 0;
@@ -278,7 +236,7 @@ public class ChessGame extends Observable {
         setChanged();
         notifyObservers();
 
-        return chess.getPieceOnPos( board, row, col );
+        return chess.getPieceOnBoard( row, col );
 
     }
 
@@ -287,7 +245,7 @@ public class ChessGame extends Observable {
         int count = 0;
         for ( int i = 0; i < rowLength; i++ ) {
             for ( int j = 0; j < colLength; j++ ) {
-                if ( board[i][j] != '.' )
+                if ( !chess.getPieceOnBoard( i, j ).isBlank() )
                     count++;
 
                 if ( count > 1 )
@@ -305,13 +263,13 @@ public class ChessGame extends Observable {
 
         try {
             // Setting the value of the chess to the current board for solver
-            chess.setBoardValues( board );
+            Solver<Chess> solver = new Solver<Chess>();
+            ArrayList<Chess> solutions = solver.solve( chess );
 
-            Solver<char[][]> solver = new Solver<char[][]>();
-            ArrayList<char[][]> solutions = solver.solve( chess );
-
+            
             // Return the first step from solutions
-            board = copyBoard( solutions.get( 1 ) );
+            chess = new Chess( solutions.get( 1 ) );
+            chess.redrawBoard();
 
             // incrementing count
             moveCount++;
@@ -319,7 +277,9 @@ public class ChessGame extends Observable {
             setChanged();
             notifyObservers();
         } catch ( NullPointerException ex ) {
-            // Nothing to return just no more solutions available
+            noNextMove = true;
+            setChanged();
+            notifyObservers();
         }
 
     }

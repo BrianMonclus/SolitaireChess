@@ -1,3 +1,4 @@
+
 package chessGame;
 
 /*
@@ -43,9 +44,11 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 
 import chessPieces.Bishop;
+import chessPieces.Blank;
 import chessPieces.King;
 import chessPieces.Knight;
 import chessPieces.Pawn;
@@ -59,10 +62,10 @@ import chessPieces.Rook;
  *         CS242
  */
 
-public class Chess implements Puzzle<char[][]>{
+public class Chess implements Puzzle<Chess> {
 
-    private char[][] board; // board arraylist to hold
-                            // pieces
+    private Pieces[][] board; // board arraylist to hold
+                              // pieces
     private int cols; // int to hold number of columns
     private File file; // File object to hold file
     private BufferedReader reader; // Buffered reader to keep track of reading
@@ -79,13 +82,40 @@ public class Chess implements Puzzle<char[][]>{
         this.file = file;
         // Setting rows and cols
         setDimensions();
-        board = new char[rows][cols];
+        board = new Pieces[rows][cols];
         setBoard();
 
     }
 
+    /**
+     * Description: Copy constructor.
+     * 
+     * @param chess,
+     *            Chess object to copy
+     */
+    public Chess( Chess chess ) {
+
+        this.rows = chess.rows;
+        this.cols = chess.cols;
+
+        this.board = new Pieces[this.rows][this.cols];
+        /* FILE and BufferedReader can be ignored */
+
+        // Copying board
+        for ( int i = 0; i < this.rows; i++ ) {
+            for ( int j = 0; j < this.cols; j++ ) {
+
+                char pieceChar = chess.getPieceOnBoard( i, j ).getPieceChar();
+
+                this.board[i][j] = newPieceObj( pieceChar, this, i, j );
+
+            }
+        }
+
+    }
+
     // Getter of board
-    public char[][] getBoard() {
+    public Pieces[][] getBoard() {
         return board;
     }
 
@@ -110,49 +140,45 @@ public class Chess implements Puzzle<char[][]>{
      *         config
      */
     @Override
-    public ArrayList<char[][]> getNeighbors( char[][] config ) {
-        ArrayList<char[][]> solutions = new ArrayList<>();
+    public ArrayList<Chess> getNeighbors( Chess config ) {
+        ArrayList<Chess> solutions = new ArrayList<>();
 
-        int rowLength = rows;
-        int colLength = cols;
+        int rowLength = config.rows; // Row length
+        int colLength = config.cols; // Column length
 
         for ( int i = 0; i < rowLength; i++ ) {
             for ( int j = 0; j < colLength; j++ ) {
 
-                if ( config[i][j] != '.' ) {
+                // Get piece on config board
+                Pieces piece = config.getPieceOnBoard( i, j );
+                // If the cell is not empty
+                if ( !piece.isBlank() ) {
 
-                    Pieces piece = getPieceOnPos( config, i, j );
+                    // Get neighbors of config board in form of
+                    // position integer values
                     ArrayList<int[][]> neighbors = new ArrayList<>(
                             piece.getPieceNeighbors() );
 
+                    // For each neighbor in config board
                     for ( int[][] neighs : neighbors ) {
 
                         for ( int r = 0; r < neighs.length; r++ ) {
 
                             // rows will always be index 0
-                            int row = neighs[r][0];
+                            int rowNeighbor = neighs[r][0];
                             // columns will always be index 1
-                            int col = neighs[r][1];
+                            int colNeighbor = neighs[r][1];
 
-                            // make a copy of config to change
-                            char[][] temp = new char[rowLength][colLength];
+                            // make a copy (copy constructor) of config to
+                            // change and piece
+                            Chess temp = new Chess( config );
+                            temp.board[rowNeighbor][colNeighbor] = piece;
 
-                            for ( int h = 0; h < rowLength; h++ ) {
-                                for ( int d = 0; d < colLength; d++ ) {
-                                    temp[h][d] = config[h][d];
-                                }
-                            }
+                            // Move the piece to the new position
+                            piece.setPiecePosition( rowNeighbor, colNeighbor );
 
-                            // move the piece value
-                            char pieceToMove = piece.getPieceChar();
-                            temp[row][col] = pieceToMove;
-
-                            // Changing the row/col of the new piece
-                            piece.setPieceRow( row );
-                            piece.setPieceColumn( col );
-
-                            //Making old position a '.'
-                            temp[i][j] = '.';
+                            // Set old position to be blank
+                            temp.board[i][j] = new Blank( temp, i, j );
 
                             solutions.add( temp );
 
@@ -163,7 +189,6 @@ public class Chess implements Puzzle<char[][]>{
 
             }
         }
-
         return solutions;
     }
 
@@ -178,22 +203,9 @@ public class Chess implements Puzzle<char[][]>{
      *            - int col location
      * @return Pieces - Object Pieces that is on board
      */
-    public Pieces getPieceOnPos( char[][] board, int row, int col ) {
+    public Pieces getPieceOnBoard( int row, int col ) {
 
-        if ( board[row][col] == 'B' )
-            return new Bishop( this, row, col );
-        else if ( board[row][col] == 'K' )
-            return new King( this, row, col );
-        else if ( board[row][col] == 'N' )
-            return new Knight( this, row, col );
-        else if ( board[row][col] == 'P' )
-            return new Pawn( this, row, col );
-        else if ( board[row][col] == 'Q' )
-            return new Queen( this, row, col );
-        else if ( board[row][col] == 'R' )
-            return new Rook( this, row, col );
-        else
-            return null;
+        return board[row][col];
 
     }
 
@@ -208,8 +220,8 @@ public class Chess implements Puzzle<char[][]>{
      * @return char[][] - the begining config
      */
     @Override
-    public char[][] getStart() {
-        return board;
+    public Chess getStart() {
+        return this;
     }
 
     /**
@@ -218,11 +230,11 @@ public class Chess implements Puzzle<char[][]>{
      * @return isGoal - a boolean determining if its the goal
      */
     @Override
-    public boolean isGoal( char[][] config ) {
+    public boolean isGoal( Chess config ) {
         int count = 0;
-        for ( int i = 0; i < config.length; i++ ) {
-            for ( int j = 0; j < config[0].length; j++ ) {
-                if ( config[i][j] != '.' )
+        for ( int i = 0; i < config.rows; i++ ) {
+            for ( int j = 0; j < config.cols; j++ ) {
+                if ( !config.board[i][j].isBlank() )
                     count++;
 
                 if ( count > 1 )
@@ -232,6 +244,82 @@ public class Chess implements Puzzle<char[][]>{
         return true;
     }
 
+    public Pieces newPieceObj( char piece, Chess chess, int row, int col ) {
+
+        switch ( piece ) {
+        case 'B':
+            return new Bishop( chess, row, col );
+
+        case 'K':
+            return new King( this, row, col );
+
+        case 'N':
+            return new Knight( this, row, col );
+
+        case 'P':
+            return new Pawn( this, row, col );
+
+        case 'Q':
+            return new Queen( this, row, col );
+
+        case 'R':
+            return new Rook( this, row, col );
+
+        case '.':
+            return new Blank( this, row, col );
+
+        default:
+            System.out
+                    .println( "ERROR on newPieceObj line 378, creating Piece" );
+            return null;
+
+        }
+
+    }
+
+    /**
+     * Description: Removes a piece from the board by assigning it to null.
+     * 
+     * @param row
+     *            - row of piece
+     * @param col
+     *            - column of piece
+     */
+    public void removePiece( int row, int col ) {
+
+        board[row][col] = new Blank( this, row, col );
+
+    }
+
+    /**
+     * Remakes the board array of pieces void @exception
+     */
+    protected void setBoardPiece( Pieces piece, int row, int col ) {
+
+        board[row][col] = piece;
+
+    }
+
+    protected void redrawBoard() {
+
+        Chess tempBoard = new Chess( this );
+        for ( int i = 0; i < rows; i++ ) {
+            for ( int j = 0; j < cols; j++ ) {
+
+                // Redrawing the entire board
+                Pieces piece = tempBoard.board[i][j];
+                char pieceChar = piece.getPieceChar();
+                int pos[] = piece.getPosition();
+                int row = pos[0];
+                int col = pos[1];
+                board[row][col] = newPieceObj( pieceChar, this, row, col );
+
+            }
+
+        }
+
+    }
+
     /**
      * This method will set the pieces in the board void
      * 
@@ -239,28 +327,47 @@ public class Chess implements Puzzle<char[][]>{
      *                in case BufferedReader fails, or cannot close
      */
     private void setBoard() {
-        int read;
-        ArrayList<Character> pieces;
+        int read; /*
+                   * var to check for empty lines Then casted into a char and
+                   * added to board
+                   */
+        int col = 0;
+        ArrayDeque<Character> charReadArr = new ArrayDeque<>(); // Pieces read
+        ArrayDeque<Integer> colPosArr = new ArrayDeque<>(); // Piece column
+                                                            // Position
 
-        // repeating for as many rows
-        for ( int i = 0; i < rows; i++ ) {
-
-            // initializing pieces
-            pieces = new ArrayList<>();
+        // repeating for as many ROWS
+        for ( int row = 0; row < rows; row++ ) {
 
             // While it doesn't break line
             try {
+                // Reading columns
                 while ( (read = reader.read()) != -1 && read != '\n' ) {
-                    // Skip spaces
-                    if ( read != ' ' )
-                        pieces.add( (char) read );
+
+                    // While it is not blank, add the position
+                    // denoted by col and character read
+                    if ( read != ' ' ) {
+                        charReadArr.add( (char) read );
+                        colPosArr.add( col );
+                        col++;
+
+                    }
 
                 }
 
                 // add pieces array list to board
-                for ( int m = 0; m < pieces.size(); m++ ) {
-                    board[i][m] = pieces.get( m );
+                while ( !colPosArr.isEmpty() ) {
+
+                    // Re-assigning piece column position
+                    col = colPosArr.remove();
+                    char charRead = charReadArr.remove();
+
+                    board[row][col] = newPieceObj( charRead, this, row, col );
+
                 }
+
+                col = 0; // Resetting counter.
+
             } catch ( IOException e ) {
                 System.out.println( file.getName() + " not found." );
                 System.exit( 0 );
@@ -308,23 +415,6 @@ public class Chess implements Puzzle<char[][]>{
         rows = Character.getNumericValue( dimensions.get( 0 ) );
         cols = Character.getNumericValue( dimensions.get( 1 ) );
 
-    }
-    
-    /**
-     * Changes the board
-     * 
-     * @param newBoard - board to change to
-     * @exception
-     */
-    public void setBoardValues(char[][] newBoard){
-
-        for ( int i = 0; i < rows; i++ ) {
-            for ( int j = 0; j < cols; j++ ) {
-                board[i][j] = newBoard[i][j];
-            }
-        }
-        
-        
     }
 
 }

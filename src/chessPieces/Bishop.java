@@ -60,14 +60,14 @@ public class Bishop extends Pieces {
             // row length pawn can travel
             int rowLength = super.rowLength -1;
 
-            /* FRONT DIAGANOL GOING UP */
+            /* BACK DIAGANOL GOING UP */
             if(rowLocation > 0 && colLocation > 0){
 
                 for ( int i = 1, j = 1; i <= rowLength 
                         && j <= colLength; i++, j++ ) {
                     
                     //If it doesn't go out of bounds keep going
-                    if(rowLocation - i > 0 && colLocation - j > 0){
+                    if(rowLocation - i >= 0 && colLocation - j >= 0){
                         
                     if(isOccupied(rowLocation-i, colLocation -j)){
                         int [][] pos = {{rowLocation -i, colLocation -j}};
@@ -79,13 +79,13 @@ public class Bishop extends Pieces {
             }
             
 
-            /* FRONT DIAGANOL DOWN */
+            /* BACK DIAGANOL DOWN */
             if(rowLocation < rowLength && colLocation < colLength ){
                 
                 for (int i = 1, j = 1; i <= rowLength && j <= colLength; i++, j++){
                     
                     //If it doesn't go out of bounds
-                    if((rowLocation + i < rowLocation && colLocation + j < colLength)) {
+                    if((rowLocation + i <= rowLength && colLocation + j <= colLength)) {
                         if (isOccupied(rowLocation +i, colLocation +j)){
                         int [][] pos = {{rowLocation +i, colLocation +j}};
                         solutions.add( pos );
@@ -95,11 +95,11 @@ public class Bishop extends Pieces {
             }
             
 
-            /* BACK DIAGANOL GOING UP */
+            /* FRONT DIAGANOL GOING UP */
             if(rowLocation > 0 && colLocation < colLength){
                 
                 for (int i = 1, j = 1; i <= rowLength && j <= colLength; i++, j++){
-                    if(rowLocation - i > 0 && colLocation + j < colLength){
+                    if(rowLocation - i >= 0 && colLocation + j <= colLength){
                     if(isOccupied(rowLocation -i, colLocation +j)){
                         int[][] pos = {{rowLocation -i, colLocation +j}};
                         solutions.add( pos );
@@ -113,7 +113,7 @@ public class Bishop extends Pieces {
                 
                 for (int i = 1, j = 1; i <= rowLength && j <= colLength; i++, j++){
                     
-                    if(rowLocation + i < rowLength && colLocation - j > 0){
+                    if(rowLocation + i <= rowLength && colLocation - j >= 0){
                     if(isOccupied(rowLocation+i,colLocation-j )){
                         int[][] pos = {{rowLocation +i, colLocation -j}};
                         solutions.add( pos );

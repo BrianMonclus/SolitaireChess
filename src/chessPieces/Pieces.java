@@ -1,3 +1,4 @@
+
 package chessPieces;
 
 import java.util.ArrayList;
@@ -50,16 +51,16 @@ public abstract class Pieces {
     protected int rowLength;
     protected int rowLocation;
 
-    public Pieces( Chess board, char pieceChar, int rowLocation, int colLocation ) {
+    public Pieces( Chess board, char pieceChar, int rowLocation,
+            int colLocation ) {
         this.board = board;
         this.pieceChar = pieceChar;
-        this.colLength = this.board.getCols();
-        this.rowLength = this.board.getRows();
+        this.colLength = board.getCols();
+        this.rowLength = board.getRows();
         this.rowLocation = rowLocation;
         this.colLocation = colLocation;
 
     }
-
 
     // Getter of char piece
     public char getPieceChar() {
@@ -67,7 +68,7 @@ public abstract class Pieces {
     }
 
     public abstract ArrayList<int[][]> getPieceNeighbors();
-    
+
     /**
      * This will return an array containing row and column
      * 
@@ -82,27 +83,40 @@ public abstract class Pieces {
 
     }
 
-    
-    public boolean isInBoard(){
-        
-        for (int i = 0; i < rowLength; i++){
-            for (int j = 0; j < colLength; j++){
-                if (board.getBoard()[i][j] == pieceChar)
+    public boolean isInBoard() {
+
+        for ( int i = 0; i < rowLength; i++ ) {
+            for ( int j = 0; j < colLength; j++ ) {
+                if ( board.getPieceOnBoard( i, j ).pieceChar == pieceChar )
                     return true;
             }
         }
         return false;
-        
-        
+
     }
-    
+
     public boolean isOccupied( int row, int col ) {
         boolean occupied = true;
 
-        if ( board.getBoard()[row][col] == '.' )
+        if ( board.getPieceOnBoard( row, col ).isBlank() )
             occupied = false;
 
         return occupied;
+
+    }
+
+    public boolean isBlank() {
+
+        return (pieceChar == '.') ? true : false;
+    }
+
+    public boolean equals( Pieces piece ) {
+
+        if ( getPosition().equals( piece.getPosition() )
+                && pieceChar == piece.pieceChar )
+            return true;
+        else
+            return false;
 
     }
 
@@ -111,14 +125,12 @@ public abstract class Pieces {
         pieceChar = piece;
     }
     
-    // Setter of piece col
-    public void setPieceColumn(int colLocation){
-        this.colLocation = colLocation;
+    public void setPiecePosition( int row, int col) {
+        
+        this.rowLocation = row;
+        this.colLocation = col;
+        
     }
-    
-    //Setter of piece row
-    public void setPieceRow(int rowLocation){
-        this.rowLocation = rowLocation;
-    }
+
 
 }

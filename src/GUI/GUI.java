@@ -1,4 +1,6 @@
+
 package GUI;
+
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.FlowLayout;
@@ -62,7 +64,6 @@ public class GUI extends JFrame implements Observer {
     private int cols;
     JLabel label;
     int moveCount;
-    private char[][] origBoard;
 
     private int rows;
 
@@ -73,7 +74,6 @@ public class GUI extends JFrame implements Observer {
 
         rows = chessGame.getRowLength();
         cols = chessGame.getColLength();
-        origBoard = chessGame.getBoard();
         moveCount = chessGame.getMoveCount();
         label = new JLabel( "Moves: 0" );
 
@@ -86,7 +86,7 @@ public class GUI extends JFrame implements Observer {
         add( menuPanel(), BorderLayout.SOUTH );
         add( labelPanel(), BorderLayout.NORTH );
         // add(instructionPanel(), BorderLayout.NORTH);
-        
+
         pack();
 
     }
@@ -115,8 +115,7 @@ public class GUI extends JFrame implements Observer {
                         }
 
                     }
-                } ); 
-
+                } );
 
                 if ( i % 2 == 0 && j % 2 == 0 )
                     buttons[i][j].setBackground( Color.blue );
@@ -208,9 +207,9 @@ public class GUI extends JFrame implements Observer {
         for ( int i = 0; i < rows; i++ ) {
             for ( int j = 0; j < cols; j++ ) {
 
-                if ( origBoard[i][j] != '.' )
+                if ( !chess.getPieceOnBoard( i, j ).isBlank() )
                     currentBoard[i][j] = (new PiecesButtons(
-                            chess.getPieceOnPos( origBoard, i, j ) ));
+                            chess.getPieceOnBoard( i, j ) ));
                 else {
                     currentBoard[i][j] = (new PiecesButtons(
                             new Blank( chess, i, j ) ));
@@ -291,9 +290,11 @@ public class GUI extends JFrame implements Observer {
      */
     @Override
     public void update( Observable o, Object arg ) {
-        
-        if(chessGame.invalidMove){
-            label.setText( "Moves: " + Integer.toString( chessGame.getMoveCount()) + "   Invalid move. Try again" );
+
+        if ( chessGame.invalidMove ) {
+            label.setText(
+                    "Moves: " + Integer.toString( chessGame.getMoveCount() )
+                            + "   Invalid move. Try again" );
             return;
         }
 
@@ -303,8 +304,8 @@ public class GUI extends JFrame implements Observer {
 
         for ( int i = 0; i < rows; i++ ) {
             for ( int j = 0; j < cols; j++ ) {
-                currentBoard[i][j].setText(
-                        PiecesButtons.pieceIcon( chessGame.getBoard()[i][j] ) );
+                currentBoard[i][j].setText( PiecesButtons.pieceIcon( chessGame
+                        .getChess().getPieceOnBoard( i, j ).getPieceChar() ) );
 
             }
         }
@@ -313,8 +314,14 @@ public class GUI extends JFrame implements Observer {
         if ( chessGame.wonGame() ) {
             label.setText(
                     "Moves: " + Integer.toString( chessGame.getMoveCount() )
-                            + "   CONGRATULATIONS YOU WON!" );
+                            + "     CONGRATULATIONS YOU WON!" );
             disableButtons( false );
+        }
+
+        if ( chessGame.noNextMove ) {
+            label.setText(
+                    "Moves: " + Integer.toString( chessGame.getMoveCount() )
+                            + "     Noo more moves left. You have lost :(" );
         }
 
     }
@@ -327,15 +334,11 @@ public class GUI extends JFrame implements Observer {
     @SuppressWarnings( "unused" )
     public static void main( String[] args ) {
 
-        try {
-            File file = new File( args[0] );
-            Chess chess = new Chess( file );
-            ChessGame game = new ChessGame( chess );
+        File file = new File( "test.txt" );
+        Chess chess = new Chess( file );
+        ChessGame game = new ChessGame( chess );
 
-            GUI gui = new GUI( game );
-        } catch ( ArrayIndexOutOfBoundsException ex ) {
-            System.out.println( "usage: java Chess input-file" );
-        }
+        GUI gui = new GUI( game );
 
     }
 }

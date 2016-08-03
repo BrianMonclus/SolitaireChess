@@ -54,13 +54,11 @@ public class King extends Pieces {
         ArrayList<int[][]> solutions = new ArrayList<>();
 
         if ( isInBoard() ) {
-            // column length pawn can travel
             int colLength = super.colLength -1;
 
-            // row length pawn can travel
             int rowLength = super.rowLength -1;
 
-            /* FRONT DIAGANOL GOING UP */
+            /* BACK DIAGANOL GOING UP */
 
             {
                 if ( (rowLocation > 0 && colLocation > 0)
@@ -70,7 +68,7 @@ public class King extends Pieces {
                 }
             }
 
-            /* FRONT DIAGANOL DOWN */
+            /* BACK DIAGANOL DOWN */
             {
                 if ( (rowLocation < rowLength && colLocation < colLength)
                         && isOccupied( rowLocation + 1, colLocation + 1 ) ) {
@@ -79,7 +77,7 @@ public class King extends Pieces {
                 }
             }
 
-            /* BACK DIAGANOL GOING UP */
+            /* FRONT DIAGANOL GOING UP */
             {
                 if ( (rowLocation > 0 && colLocation < colLength)
                         && isOccupied( rowLocation - 1, colLocation + 1 ) ) {
@@ -88,7 +86,7 @@ public class King extends Pieces {
                 }
             }
 
-            /* BACK DIAGANOL GOING DOWN */
+            /* FRONT DIAGANOL GOING DOWN */
             {
                 if ( (rowLocation < rowLength && colLocation > 0)
                         && isOccupied( rowLocation + 1, colLocation - 1 ) ) {
