@@ -3,7 +3,7 @@ package chessPieces;
 
 import java.util.ArrayList;
 
-import chessGame.Chess;
+import chessGame.ChessBoard;
 
 /*
  * Queen.java
@@ -40,7 +40,7 @@ public class Queen extends Pieces {
 
     private static final char CHARPIECE = 'Q';
 
-    public Queen( Chess board, int rowLocation, int colLocation ) {
+    public Queen( ChessBoard board, int rowLocation, int colLocation ) {
         super( board, CHARPIECE, rowLocation, colLocation );
     }
 

@@ -3,7 +3,7 @@ package chessPieces;
 
 import java.util.ArrayList;
 
-import chessGame.Chess;
+import chessGame.ChessBoard;
 
 /*
  * Pawn.java
@@ -46,7 +46,7 @@ public class Pawn extends Pieces {
 
     private final static char PIECECHAR = 'P';
 
-    public Pawn( Chess board, int rowLocation, int colLocation ) {
+    public Pawn( ChessBoard board, int rowLocation, int colLocation ) {
         super( board, PIECECHAR, rowLocation, colLocation );
 
     }

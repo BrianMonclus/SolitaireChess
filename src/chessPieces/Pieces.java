@@ -3,7 +3,7 @@ package chessPieces;
 
 import java.util.ArrayList;
 
-import chessGame.Chess;
+import chessGame.ChessBoard;
 
 /*
  * Pieces.java
@@ -44,14 +44,14 @@ import chessGame.Chess;
 
 public abstract class Pieces {
 
-    protected Chess board;
+    protected ChessBoard board;
     protected int colLength;
     protected int colLocation;
     protected char pieceChar;
     protected int rowLength;
     protected int rowLocation;
 
-    public Pieces( Chess board, char pieceChar, int rowLocation,
+    public Pieces( ChessBoard board, char pieceChar, int rowLocation,
             int colLocation ) {
         this.board = board;
         this.pieceChar = pieceChar;

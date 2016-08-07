@@ -3,7 +3,7 @@ package chessPieces;
 
 import java.util.ArrayList;
 
-import chessGame.Chess;
+import chessGame.ChessBoard;
 
 /*
  * Blank.java
@@ -29,7 +29,7 @@ public class Blank extends Pieces {
     
     private static final char PIECECHAR = '.';
     
-    public Blank( Chess board, int rowLocation, int colLocation ) {
+    public Blank( ChessBoard board, int rowLocation, int colLocation ) {
         super( board, PIECECHAR, rowLocation, colLocation );
     }
 

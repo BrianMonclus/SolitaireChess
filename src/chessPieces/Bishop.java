@@ -3,7 +3,7 @@ package chessPieces;
 
 import java.util.ArrayList;
 
-import chessGame.Chess;
+import chessGame.ChessBoard;
 
 /*
  * Bishop.java
@@ -40,7 +40,7 @@ public class Bishop extends Pieces {
 
     private final static char PIECECHAR = 'B';
 
-    public Bishop( Chess board, int rowLocation, int colLocation ) {
+    public Bishop( ChessBoard board, int rowLocation, int colLocation ) {
         super( board, PIECECHAR, rowLocation, colLocation );
     }
 

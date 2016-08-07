@@ -3,7 +3,7 @@ package chessPieces;
 
 import java.util.ArrayList;
 
-import chessGame.Chess;
+import chessGame.ChessBoard;
 
 /*
  * King.java
@@ -40,7 +40,7 @@ public class King extends Pieces {
 
     private final static char PIECECHAR = 'K';
 
-    public King( Chess board, int rowLocation, int colLocation ) {
+    public King( ChessBoard board, int rowLocation, int colLocation ) {
         super( board, PIECECHAR, rowLocation, colLocation );
     }
 

@@ -3,7 +3,7 @@ package chessPieces;
 
 import java.util.ArrayList;
 
-import chessGame.Chess;
+import chessGame.ChessBoard;
 
 /*
  * Rook.java
@@ -40,7 +40,7 @@ public class Rook extends Pieces {
 
     private final static char PIECECHAR = 'R';
 
-    public Rook( Chess board, int rowLocation, int colLocation ) {
+    public Rook( ChessBoard board, int rowLocation, int colLocation ) {
         super( board, PIECECHAR, rowLocation, colLocation );
     }
 

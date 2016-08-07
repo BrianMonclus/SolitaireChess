@@ -7,7 +7,6 @@ import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.File;
 import java.util.Observable;
 import java.util.Observer;
 
@@ -19,7 +18,7 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
-import chessGame.Chess;
+import chessGame.ChessBoard;
 import chessGame.ChessGame;
 import chessPieces.Blank;
 
@@ -59,24 +58,22 @@ import chessPieces.Blank;
 public class GUI extends JFrame implements Observer {
 
     PiecesButtons[][] currentBoard;
-    private Chess chess;
+    private ChessBoard chessBoard;
     private ChessGame chessGame;
     private int cols;
     JLabel label;
-    int moveCount;
 
     private int rows;
 
     public GUI( ChessGame chessGame ) {
-        this.chess = chessGame.getChess();
+        this.chessBoard = chessGame.getChessBoard();
         this.chessGame = chessGame;
         this.chessGame.addObserver( this );
 
-        rows = chessGame.getRowLength();
-        cols = chessGame.getColLength();
-        moveCount = chessGame.getMoveCount();
-        label = new JLabel( "Moves: 0" );
+        rows = chessGame.rowLength;
+        cols = chessGame.colLength;
 
+        label = new JLabel( "Moves: 0" );
         currentBoard = new PiecesButtons[rows][cols];
 
         populatePieceButtons();
@@ -98,6 +95,7 @@ public class GUI extends JFrame implements Observer {
         for ( int i = 0; i < buttons.length; i++ ) {
             for ( int j = 0; j < buttons[0].length; j++ ) {
 
+                // Needed for inner class
                 int row = i;
                 int col = j;
 
@@ -107,7 +105,7 @@ public class GUI extends JFrame implements Observer {
                     @Override
                     public void actionPerformed( ActionEvent e ) {
 
-                        if ( chessGame.isSelected ) {
+                        if ( chessGame.getIsSelected() ) {
                             chessGame.movePiece( row, col );
 
                         } else {
@@ -207,12 +205,12 @@ public class GUI extends JFrame implements Observer {
         for ( int i = 0; i < rows; i++ ) {
             for ( int j = 0; j < cols; j++ ) {
 
-                if ( !chess.getPieceOnBoard( i, j ).isBlank() )
+                if ( !chessBoard.getPieceOnBoard( i, j ).isBlank() )
                     currentBoard[i][j] = (new PiecesButtons(
-                            chess.getPieceOnBoard( i, j ) ));
+                            chessBoard.getPieceOnBoard( i, j ) ));
                 else {
                     currentBoard[i][j] = (new PiecesButtons(
-                            new Blank( chess, i, j ) ));
+                            new Blank( chessBoard, i, j ) ));
                 }
 
             }
@@ -291,7 +289,7 @@ public class GUI extends JFrame implements Observer {
     @Override
     public void update( Observable o, Object arg ) {
 
-        if ( chessGame.invalidMove ) {
+        if ( chessGame.getIsInvalidMove() ) {
             label.setText(
                     "Moves: " + Integer.toString( chessGame.getMoveCount() )
                             + "   Invalid move. Try again" );
@@ -305,7 +303,7 @@ public class GUI extends JFrame implements Observer {
         for ( int i = 0; i < rows; i++ ) {
             for ( int j = 0; j < cols; j++ ) {
                 currentBoard[i][j].setText( PiecesButtons.pieceIcon( chessGame
-                        .getChess().getPieceOnBoard( i, j ).getPieceChar() ) );
+                        .getChessBoard().getPieceOnBoard( i, j ).getPieceChar() ) );
 
             }
         }
@@ -318,7 +316,7 @@ public class GUI extends JFrame implements Observer {
             disableButtons( false );
         }
 
-        if ( chessGame.noNextMove ) {
+        if ( chessGame.getNoNextMove() ) {
             label.setText(
                     "Moves: " + Integer.toString( chessGame.getMoveCount() )
                             + "     Noo more moves left. You have lost :(" );
@@ -326,16 +324,9 @@ public class GUI extends JFrame implements Observer {
 
     }
 
-    /**
-     * 
-     * @param args
-     *            void @exception
-     */
     @SuppressWarnings( "unused" )
     public static void main( String[] args ) {
-
-        File file = new File( "test.txt" );
-        Chess chess = new Chess( file );
+        ChessBoard chess = new ChessBoard( 1 );
         ChessGame game = new ChessGame( chess );
 
         GUI gui = new GUI( game );

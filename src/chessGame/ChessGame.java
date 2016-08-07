@@ -3,80 +3,56 @@ package chessGame;
 
 import java.util.ArrayList;
 import java.util.Observable;
-
 import chessPieces.Blank;
 import chessPieces.Pieces;
-
-/*
- * ChessGame.java
- *
- * Version:
- * $Id: ChessGame.java,v 1.4 2015/12/12 04:42:12 ju7847 Exp $
- *
- * Revisions:
- * $Log: ChessGame.java,v $
- * Revision 1.4  2015/12/12 04:42:12  ju7847
- * Silly, forgot to toggle isSelected
- *
- * Revision 1.3  2015/12/12 04:24:50  ju7847
- * Fixed another small mistake
- *
- * Revision 1.2  2015/12/12 04:02:10  ju7847
- * Finished .. .debugging some more
- *
- * Revision 1.1  2015/12/11 21:25:20  ju7847
- * Almost done with GUI... i think
- *
- */
 
 /**
  * @author Jean Luis Urena
  * @author ID: ju7847
  *
- *
- *         This class will serve to run the Solitare Chess game CS242
+ *         This class is the ChessGame controller of the GUI. It basically has
+ *         all methods necessary for the game.
  */
 
 public class ChessGame extends Observable {
 
-    private Chess chess;
-    private int colLength;
-    public boolean isSelected;
+    // Default values false.
+    private boolean isSelected = false;
+    private boolean invalidMove = false;
+    private boolean noNextMove = false;
+
+    private ChessBoard chessBoard;
+    public int colLength;
     private int moveCount;
     private int[] pieceHeld; // This will hold row and col location of piece
                              // held
-
-    private Chess origBoard;
-    private int rowLength;
-    public boolean invalidMove = false;
-    public boolean noNextMove = false;
+    public int rowLength;
 
     /**
-     * Constructor takes a chess board and creates a new one
+     * Constructor takes a chess board and creates a copy for reset
      * 
      * @param board
      */
-    public ChessGame( Chess chess ) {
-        this.chess = chess;
-        isSelected = false;
+    public ChessGame( ChessBoard chessBoard ) {
+        this.chessBoard = chessBoard;
         moveCount = 0;
         pieceHeld = new int[2]; // Will get value in methods
-        rowLength = this.chess.getRows();
-        colLength = this.chess.getCols();
-
-        // Copying original board retaining original for reset
-        origBoard = new Chess( chess );
+        rowLength = this.chessBoard.getRows();
+        colLength = this.chessBoard.getCols();
 
     }
 
     // Getter of chess
-    public Chess getChess() {
-        return chess;
+    public ChessBoard getChessBoard() {
+        return chessBoard;
     }
 
-    // Getter for column length
-    public int getColLength() {
-        return colLength;
+    public boolean getIsInvalidMove() {
+        return invalidMove;
+    }
+
+    public boolean getIsSelected() {
+        return isSelected;
     }
 
     // Getter of move count
@@ -84,9 +60,8 @@ public class ChessGame extends Observable {
         return moveCount;
     }
 
-    // Getter for row length
-    public int getRowLength() {
-        return rowLength;
+    public boolean getNoNextMove() {
+        return noNextMove;
     }
 
     /**
@@ -140,7 +115,7 @@ public class ChessGame extends Observable {
 
         // Selecting the first piece validation
         // Confirming not selecting empty space
-        if ( chess.getPieceOnBoard( fRow, fCol ) == null ) {
+        if ( chessBoard.getPieceOnBoard( fRow, fCol ) == null ) {
             invalidMove = true;
 
             setChanged();
@@ -171,14 +146,15 @@ public class ChessGame extends Observable {
         } else {
 
             // Delete overtaken piece
-            chess.removePiece( secondRow, secondCol );
+            chessBoard.removePiece( secondRow, secondCol );
 
             // Assigning the piece a value on new board
             selectedPiece.setPiecePosition( secondRow, secondCol );
 
             // Remaking the board
-            chess.setBoardPiece(new Blank(chess, fRow, fCol), fRow, fCol);
-            chess.setBoardPiece(selectedPiece, secondRow, secondCol);
+            chessBoard.setBoardPiece( new Blank( chessBoard, fRow, fCol ), fRow,
+                    fCol );
+            chessBoard.setBoardPiece( selectedPiece, secondRow, secondCol );
 
             // increment move count
             moveCount++;
@@ -195,15 +171,44 @@ public class ChessGame extends Observable {
     }
 
     /**
-     * This method will reset the board to the original board void @exception
+     * Description: This method searches for the next best move and makes it.
+     * 
+     */
+    public void nextBestMove() {
+
+        try {
+            // Setting the value of the chess to the current board for solver
+            Solver<ChessBoard> solver = new Solver<ChessBoard>();
+            ArrayList<ChessBoard> solutions = solver.solve( chessBoard );
+
+            // Return the first step from solutions
+            chessBoard = new ChessBoard( solutions.get( 1 ) );
+            chessBoard.redrawBoard();
+
+            // incrementing count
+            moveCount++;
+
+            setChanged();
+            notifyObservers();
+        } catch ( NullPointerException ex ) {
+            noNextMove = true;
+            setChanged();
+            notifyObservers();
+        }
+
+    }
+
+    /**
+     * Description: This method will reset the board to the original board
      */
     public void reset() {
 
-        // Recopy old board
-        chess = new Chess( origBoard );
+        // Reset board to original difficulty
+        int difficulty = chessBoard.getDifficulty();
+        chessBoard = new ChessBoard( difficulty );
 
         // Redraw entire board
-        chess.redrawBoard();
+        chessBoard.redrawBoard();
 
         // reseting counters
         moveCount = 0;
@@ -236,16 +241,22 @@ public class ChessGame extends Observable {
         setChanged();
         notifyObservers();
 
-        return chess.getPieceOnBoard( row, col );
+        return chessBoard.getPieceOnBoard( row, col );
 
     }
 
+    /**
+     * Description: Returns whether the game has been won or not by checking if
+     * only one more piece exists.
+     * 
+     * @return boolean @exception
+     */
     public boolean wonGame() {
 
         int count = 0;
         for ( int i = 0; i < rowLength; i++ ) {
             for ( int j = 0; j < colLength; j++ ) {
-                if ( !chess.getPieceOnBoard( i, j ).isBlank() )
+                if ( !chessBoard.getPieceOnBoard( i, j ).isBlank() )
                     count++;
 
                 if ( count > 1 )
@@ -253,35 +264,6 @@ public class ChessGame extends Observable {
             }
         }
         return true;
-    }
-
-    /**
-     * This method searches for the next best move
-     * 
-     */
-    public void nextBestMove() {
-
-        try {
-            // Setting the value of the chess to the current board for solver
-            Solver<Chess> solver = new Solver<Chess>();
-            ArrayList<Chess> solutions = solver.solve( chess );
-
-            
-            // Return the first step from solutions
-            chess = new Chess( solutions.get( 1 ) );
-            chess.redrawBoard();
-
-            // incrementing count
-            moveCount++;
-
-            setChanged();
-            notifyObservers();
-        } catch ( NullPointerException ex ) {
-            noNextMove = true;
-            setChanged();
-            notifyObservers();
-        }
-
     }
 
 }
