@@ -45,6 +45,10 @@ public class PiecesButtons extends JButton {
 
     }
 
+    public char getCharacter(){
+        return character;
+    }
+    
     public static String pieceIcon(char character) {
         String charGraphic = null;
         switch ( character ) {
@@ -73,10 +77,6 @@ public class PiecesButtons extends JButton {
         }
         return charGraphic;
 
-    }
-    
-    public char getCharacter(){
-        return character;
     }
 
 }

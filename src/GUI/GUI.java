@@ -127,6 +127,19 @@ public class GUI extends JFrame implements Observer {
         return boardPanel;
     }
 
+    /**
+     * Method to disable buttons void @exception
+     */
+    private void disableButtons( boolean toggle ) {
+
+        for ( int i = 0; i < rows; i++ ) {
+            for ( int j = 0; j < cols; j++ ) {
+                currentBoard[i][j].setEnabled( !toggle );
+            }
+        }
+
+    }
+
     /***************** BUTTONS ***************************/
 
     private JButton instructions() {
@@ -163,11 +176,13 @@ public class GUI extends JFrame implements Observer {
 
     private JPanel menuPanel() {
 
+        JButton undo = undo();
         JButton reset = reset();
         JButton nextMove = nextMove();
         JButton quit = quit();
 
         JPanel menuPanel = new JPanel();
+        menuPanel.add( undo );
         menuPanel.add( reset );
         menuPanel.add( nextMove );
         menuPanel.add( quit );
@@ -244,13 +259,35 @@ public class GUI extends JFrame implements Observer {
             public void actionPerformed( ActionEvent e ) {
 
                 chessGame.reset();
-                disableButtons( true );
+                disableButtons( false );
 
             }
 
         } );
 
         return reset;
+
+    }
+
+    private JButton undo() {
+
+        JButton undo = new JButton( "Undo" );
+
+        undo.addActionListener( new ActionListener() {
+
+            @Override
+            public void actionPerformed( ActionEvent e ) {
+
+                if ( chessGame.undo() )
+                    disableButtons( false );
+                else
+                    changeLabel( "No moves to undo." );
+
+            }
+
+        } );
+
+        return undo;
 
     }
 
@@ -270,25 +307,19 @@ public class GUI extends JFrame implements Observer {
 
     }
 
-    /**
-     * Method to disable buttons void @exception
-     */
-    private void disableButtons( boolean toggle ) {
+    private void changeLabel( String message ) {
 
-        for ( int i = 0; i < rows; i++ ) {
-            for ( int j = 0; j < cols; j++ ) {
-                currentBoard[i][j].setEnabled( toggle );
-            }
-        }
-
+        label.setText( "Moves: " + Integer.toString( chessGame.getMoveCount() )
+                + "   " + message );
     }
 
     /**
-     * This method is notified and re-draws the board
+     * Description: This method is notified and re-draws the board
      */
     @Override
     public void update( Observable o, Object arg ) {
 
+        // Checking for invalid moves
         if ( chessGame.getIsInvalidMove() ) {
             label.setText(
                     "Moves: " + Integer.toString( chessGame.getMoveCount() )
@@ -302,31 +333,24 @@ public class GUI extends JFrame implements Observer {
 
         for ( int i = 0; i < rows; i++ ) {
             for ( int j = 0; j < cols; j++ ) {
-                currentBoard[i][j].setText( PiecesButtons.pieceIcon( chessGame
-                        .getChessBoard().getPieceOnBoard( i, j ).getPieceChar() ) );
+                currentBoard[i][j].setText(
+                        PiecesButtons.pieceIcon( chessGame.getChessBoard()
+                                .getPieceOnBoard( i, j ).getPieceChar() ) );
 
             }
         }
 
         // After game has won disable buttons to prevent null pointer exception
         if ( chessGame.wonGame() ) {
-            label.setText(
-                    "Moves: " + Integer.toString( chessGame.getMoveCount() )
-                            + "     CONGRATULATIONS YOU WON!" );
-            disableButtons( false );
-        }
-
-        if ( chessGame.getNoNextMove() ) {
-            label.setText(
-                    "Moves: " + Integer.toString( chessGame.getMoveCount() )
-                            + "     Noo more moves left. You have lost :(" );
+            changeLabel( "Congratulations! You won!!" );
+            disableButtons( true );
         }
 
     }
 
     @SuppressWarnings( "unused" )
     public static void main( String[] args ) {
-        ChessBoard chess = new ChessBoard( 1 );
+        ChessBoard chess = new ChessBoard( 2 );
         ChessGame game = new ChessGame( chess );
 
         GUI gui = new GUI( game );

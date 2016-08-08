@@ -1,8 +1,8 @@
 
 package chessGame;
 
-import java.util.ArrayList;
-import chessPieces.*;
+import java.util.ArrayList; // ArrayList data structure
+import chessPieces.*; // Chessboard pieces
 
 /**
  * 
@@ -22,22 +22,35 @@ public class ChessBoard implements Puzzle<ChessBoard> {
     protected int rows; // int to hold number of rows
 
     /**
-     * Constructor builds the board
+     * Description: Constructor builds the board based on the difficulty passed.
      * 
-     * @param file
+     * @param difficulty
+     *            - An integer representing difficulty level
+     * 
+     * @exception NumberFormatException
+     *                - Catches non-numerical input errors.
      */
     public ChessBoard( int difficulty ) {
 
-        this.difficulty = difficulty;
-        buildBoard(); // Builds the board based on difficulty
+        try {
+
+            this.difficulty = difficulty;
+            buildBoard(); // Builds the board based on difficulty
+
+        } catch ( NumberFormatException e ) {
+
+            System.out
+                    .println( "ERROR: Enter a number for difficulty level.\n" );
+            e.printStackTrace();
+        }
 
     }
 
     /**
      * Description: Copy constructor. Creates a deep copy of a Chess object.
      * 
-     * @param chess,
-     *            Chess object to copy
+     * @param chess
+     *            - Chess object to copy
      */
     public ChessBoard( ChessBoard chessBoard ) {
 
@@ -65,9 +78,9 @@ public class ChessBoard implements Puzzle<ChessBoard> {
     }
 
     /**
-     * This method will build the board based on the difficulty number passed.
+     * Description: This method will build the board based on the difficulty
+     * number passed.
      * 
-     * TODO catch illegalargument and non-number error
      */
     private void buildBoard() {
 
@@ -76,18 +89,37 @@ public class ChessBoard implements Puzzle<ChessBoard> {
         case 1:
             rows = 4;
             cols = 4;
-            board = new Pieces [rows][cols];
+            board = new Pieces[rows][cols];
             board[0][2] = new Knight( this, 0, 2 );
             board[2][1] = new Bishop( this, 2, 1 );
             board[3][2] = new Pawn( this, 3, 2 );
 
-            for ( int i = 0; i < rows; i++ ) {
-                for ( int j = 0; j < cols; j++ ) {
-                    if ( board[i][j] == null )
-                        board[i][j] = new Blank( this, i, j );
-                }
-            }
+            fillBlanks();
+            break;
 
+        case 2:
+            rows = 4;
+            cols = 4;
+            board = new Pieces[rows][cols];
+            board[1][1] = new Bishop( this, 1, 1 );
+            board[2][0] = new Rook( this, 2, 0 );
+            board[2][1] = new Pawn( this, 2, 1 );
+            board[3][3] = new Knight( this, 3, 3 );
+
+            fillBlanks();
+            break;
+
+        }
+
+    }
+
+    private void fillBlanks() {
+
+        for ( int i = 0; i < rows; i++ ) {
+            for ( int j = 0; j < cols; j++ ) {
+                if ( board[i][j] == null )
+                    board[i][j] = new Blank( this, i, j );
+            }
         }
 
     }
@@ -111,6 +143,8 @@ public class ChessBoard implements Puzzle<ChessBoard> {
     }
 
     /**
+     * Description: Method finds all possible moves "neighbors" of a chessboard
+     * and returns it in an ArrayList.
      * 
      * @param config
      *            - a chess game board containing
@@ -124,6 +158,7 @@ public class ChessBoard implements Puzzle<ChessBoard> {
         int rowLength = chessBoard.rows; // Row length
         int colLength = chessBoard.cols; // Column length
 
+        // Cycling through the board
         for ( int i = 0; i < rowLength; i++ ) {
             for ( int j = 0; j < colLength; j++ ) {
 
@@ -171,45 +206,69 @@ public class ChessBoard implements Puzzle<ChessBoard> {
     }
 
     /**
-     * This method will return and assign and object Pieces to the board
+     * Description: This method will return the Piece at specified row, col.
      * 
-     * @param board
-     *            - char 2d array of boards
      * @param row
      *            - row location
      * @param col
      *            - int col location
-     * @return Pieces - Object Pieces that is on board
+     * @return Pieces - Object Pieces on specified row, col.
+     * 
+     * @exception -
+     *                Throws exception if row and col are not numberical.
+     *                Catches said exception.
      */
     public Pieces getPieceOnBoard( int row, int col ) {
+
+        // Verifying row and col are numbers.
+        try {
+
+            if ( !(row == (int) row && col == (int) col) )
+                throw new NumberFormatException(
+                        "ERROR: row and col parameters must be numerical." );
+
+        } catch ( NumberFormatException e ) {
+            e.printStackTrace();
+        } catch ( IndexOutOfBoundsException e ) {
+            e.printStackTrace();
+        }
 
         return board[row][col];
 
     }
 
-    // Getter of rows length
+    /**
+     * Description: Getter of rows.
+     * 
+     * @return int - Number of rows
+     */
     public int getRows() {
         return rows;
     }
 
     /**
-     * This method just returns a beginning chess puzzle
+     * Description: This method just returns the beginning puzzle. Itself.
      * 
-     * @return char[][] - the begining config
+     * @return ChessBoard - the begining chessboard
      */
     @Override
     public ChessBoard getStart() {
-        return this;
+        return new ChessBoard( difficulty );
     }
 
     /**
-     * Method to determine whether is goal or not. true if so, false if not.
+     * Description: Method determines if game is won by counting the number of
+     * pieces left on board. If there is more than one piece on the board left
+     * false, else true.
      * 
-     * @return isGoal - a boolean determining if its the goal
+     * @return boolean - a boolean determining if its the goal
      */
     @Override
     public boolean isGoal( ChessBoard chessBoard ) {
-        int count = 0;
+
+        int count = 0; // Count for pieces
+
+        // Iterating over the board
         for ( int i = 0; i < chessBoard.rows; i++ ) {
             for ( int j = 0; j < chessBoard.cols; j++ ) {
                 if ( !chessBoard.board[i][j].isBlank() )
@@ -222,6 +281,29 @@ public class ChessBoard implements Puzzle<ChessBoard> {
         return true;
     }
 
+    /**
+     * Description: Creates a specific new Pieces object based on the character
+     * piece representation, the chessboard it is in, the row and the column.
+     * 
+     * @param piece
+     *            - A char representation of the Pieces object to create.
+     * 
+     * @param chess
+     *            - The chessboard the Pieces object will be a part of.
+     * 
+     * @param row
+     *            - The row location of the Pieces object.
+     * 
+     * @param col
+     *            - The column location of the Pieces object.
+     * 
+     * @return Pieces - The new Pieces object created based on the parameters
+     *         passed.
+     * 
+     * @exception Exception
+     *                - Throws a new exception if illegal character piece
+     *                representation is passed.
+     */
     public Pieces newPieceObj( char piece, ChessBoard chess, int row,
             int col ) {
 
@@ -248,16 +330,27 @@ public class ChessBoard implements Puzzle<ChessBoard> {
             return new Blank( this, row, col );
 
         default:
-            System.out
-                    .println( "ERROR on newPieceObj line 378, creating Piece" );
+            try {
+                throw new Exception(
+                        "ERROR: Invalid character piece representation: "
+                                + piece );
+            } catch ( Exception e ) {
+
+                e.printStackTrace();
+            }
             return null;
 
         }
 
     }
 
+    /**
+     * Description: Reassigns the Pieces to their correct index position on 2D
+     * board Pieces array.
+     */
     protected void redrawBoard() {
 
+        // Copies the board to avoid accidental deletion of Pieces.
         ChessBoard tempBoard = new ChessBoard( this );
         for ( int i = 0; i < rows; i++ ) {
             for ( int j = 0; j < cols; j++ ) {
@@ -268,6 +361,8 @@ public class ChessBoard implements Puzzle<ChessBoard> {
                 int pos[] = piece.getPosition();
                 int row = pos[0];
                 int col = pos[1];
+                // Creates new piece object with same characteristics on its
+                // appropriate index
                 board[row][col] = newPieceObj( pieceChar, this, row, col );
 
             }
@@ -277,7 +372,8 @@ public class ChessBoard implements Puzzle<ChessBoard> {
     }
 
     /**
-     * Description: Removes a piece from the board by assigning it to null.
+     * Description: Removes a piece from the board by assigning it as a Blank
+     * Pieces.
      * 
      * @param row
      *            - row of piece
@@ -291,7 +387,7 @@ public class ChessBoard implements Puzzle<ChessBoard> {
     }
 
     /**
-     * Remakes the board array of pieces void @exception
+     * Description: Sets a board piece at a specific row and column.
      */
     protected void setBoardPiece( Pieces piece, int row, int col ) {
 

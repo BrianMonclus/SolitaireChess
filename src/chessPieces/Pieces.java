@@ -62,6 +62,16 @@ public abstract class Pieces {
 
     }
 
+    public boolean equals( Pieces piece ) {
+
+        if ( getPosition().equals( piece.getPosition() )
+                && pieceChar == piece.pieceChar )
+            return true;
+        else
+            return false;
+
+    }
+
     // Getter of char piece
     public char getPieceChar() {
         return pieceChar;
@@ -83,6 +93,11 @@ public abstract class Pieces {
 
     }
 
+    public boolean isBlank() {
+
+        return (pieceChar == '.') ? true : false;
+    }
+
     public boolean isInBoard() {
 
         for ( int i = 0; i < rowLength; i++ ) {
@@ -102,21 +117,6 @@ public abstract class Pieces {
             occupied = false;
 
         return occupied;
-
-    }
-
-    public boolean isBlank() {
-
-        return (pieceChar == '.') ? true : false;
-    }
-
-    public boolean equals( Pieces piece ) {
-
-        if ( getPosition().equals( piece.getPosition() )
-                && pieceChar == piece.pieceChar )
-            return true;
-        else
-            return false;
 
     }
 

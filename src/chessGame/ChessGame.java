@@ -3,6 +3,8 @@ package chessGame;
 
 import java.util.ArrayList;
 import java.util.Observable;
+import java.util.Stack;
+
 import chessPieces.Blank;
 import chessPieces.Pieces;
 
@@ -16,29 +18,35 @@ import chessPieces.Pieces;
 
 public class ChessGame extends Observable {
 
-    // Default values false.
+    // Default values are false.
     private boolean isSelected = false;
     private boolean invalidMove = false;
     private boolean noNextMove = false;
 
-    private ChessBoard chessBoard;
-    public int colLength;
-    private int moveCount;
+    private ChessBoard chessBoard; // Reference to the chessboard
+    private Stack<ChessBoard> undo; // Stack for move undo
+    public int colLength; // Column length for easier access
+    private int moveCount; // Move count
     private int[] pieceHeld; // This will hold row and col location of piece
                              // held
-    public int rowLength;
+    public int rowLength; // Row length for easier access
 
     /**
-     * Constructor takes a chess board and creates a copy for reset
+     * Constructor takes a chessboard, references it on a field value,
+     * references row length, col length, creates an array for pieceHeld of [2],
+     * instantiates a Stack of moves and pushes the initial board.
      * 
-     * @param board
+     * @param chessBoard
+     *            - A ChessBoard to play in.
      */
     public ChessGame( ChessBoard chessBoard ) {
-        this.chessBoard = chessBoard;
-        moveCount = 0;
+        this.chessBoard = chessBoard; // Reference
+
+        undo = new Stack<>();
+        moveCount = 0; // Initializing
         pieceHeld = new int[2]; // Will get value in methods
-        rowLength = this.chessBoard.getRows();
-        colLength = this.chessBoard.getCols();
+        rowLength = this.chessBoard.getRows(); // Referencing
+        colLength = this.chessBoard.getCols(); // Referencing
 
     }
 
@@ -47,10 +55,12 @@ public class ChessGame extends Observable {
         return chessBoard;
     }
 
+    // Getter of invalidMove field
     public boolean getIsInvalidMove() {
         return invalidMove;
     }
 
+    // Getter of isSelected field
     public boolean getIsSelected() {
         return isSelected;
     }
@@ -60,6 +70,7 @@ public class ChessGame extends Observable {
         return moveCount;
     }
 
+    // Getter of noNextMove field
     public boolean getNoNextMove() {
         return noNextMove;
     }
@@ -76,8 +87,10 @@ public class ChessGame extends Observable {
     public boolean isValid( Pieces piece, int secondRow, int secondCol ) {
 
         try {
+            // Getting all solutions
             ArrayList<int[][]> solutions = piece.getPieceNeighbors();
 
+            // Iterating through all possible solutions
             for ( int[][] iterate : solutions ) {
 
                 int firstRow = iterate[0][0];
@@ -95,17 +108,12 @@ public class ChessGame extends Observable {
 
     /**
      * This method will return a new board with the newly positioned pieces and
-     * change the field board
+     * change the field board. Essentially make a move.
      * 
-     * @param firstRow
-     *            - index row of piece to move
-     * @param firstCol
-     *            - index col of piece to move
      * @param secondRow
      *            - index row of piece to move to
      * @param secondCol
      *            - index col of piece to move to
-     * @return char[][] - new board with updated positions
      */
     public void movePiece( int secondRow, int secondCol ) {
 
@@ -145,6 +153,9 @@ public class ChessGame extends Observable {
 
         } else {
 
+            // Pushing old chessboard into undo move stack.
+            undo.push( new ChessBoard( chessBoard ) );
+
             // Delete overtaken piece
             chessBoard.removePiece( secondRow, secondCol );
 
@@ -176,25 +187,28 @@ public class ChessGame extends Observable {
      */
     public void nextBestMove() {
 
-        try {
-            // Setting the value of the chess to the current board for solver
-            Solver<ChessBoard> solver = new Solver<ChessBoard>();
-            ArrayList<ChessBoard> solutions = solver.solve( chessBoard );
+        // Setting the value of the chess to the current board for solver
+        Solver<ChessBoard> solver = new Solver<ChessBoard>();
+        ArrayList<ChessBoard> solutions = solver.solve( chessBoard );
 
-            // Return the first step from solutions
-            chessBoard = new ChessBoard( solutions.get( 1 ) );
-            chessBoard.redrawBoard();
-
-            // incrementing count
-            moveCount++;
-
-            setChanged();
-            notifyObservers();
-        } catch ( NullPointerException ex ) {
-            noNextMove = true;
-            setChanged();
-            notifyObservers();
+        // If solution is null, undo move is the best solution
+        if ( solutions == null ) {
+            undo();
+            return;
         }
+
+        // Return the first step from solutions
+        chessBoard = new ChessBoard( solutions.get( 1 ) );
+        chessBoard.redrawBoard();
+
+        // Pushing new board into undo stack
+        undo.push( chessBoard );
+
+        // incrementing count
+        moveCount++;
+
+        setChanged();
+        notifyObservers();
 
     }
 
@@ -211,12 +225,46 @@ public class ChessGame extends Observable {
         chessBoard.redrawBoard();
 
         // reseting counters
+        undo.clear(); // Clearing undo move
         moveCount = 0;
         invalidMove = false;
         isSelected = false;
         // Notify observers of change
         setChanged();
         notifyObservers();
+
+    }
+
+    /**
+     * Description: Undo's a move. Decrements move count as well. Returns true
+     * if move can be undone otherwise false.
+     * 
+     * @return boolean - True if move can be undone, otherwise false.
+     */
+    public boolean undo() {
+
+        // Check if undo stack is empty.
+        // Return false if it is.
+        if ( undo.isEmpty() )
+            return false;
+
+        // Decrement move count
+        if ( moveCount > 0 )
+            moveCount--;
+
+        // Resetting values
+        invalidMove = false;
+        isSelected = false;
+
+        // Then copy it into chessBoard.
+        // Finally redraw the board
+        ChessBoard undoBoard = undo.pop();
+        chessBoard = new ChessBoard( undoBoard );
+        chessBoard.redrawBoard();
+
+        setChanged();
+        notifyObservers();
+        return true;
 
     }
 
@@ -247,23 +295,13 @@ public class ChessGame extends Observable {
 
     /**
      * Description: Returns whether the game has been won or not by checking if
-     * only one more piece exists.
+     * only one more piece exists. Calls isGoal.
      * 
-     * @return boolean @exception
+     * @return boolean - True if won, false otherwise.
      */
     public boolean wonGame() {
 
-        int count = 0;
-        for ( int i = 0; i < rowLength; i++ ) {
-            for ( int j = 0; j < colLength; j++ ) {
-                if ( !chessBoard.getPieceOnBoard( i, j ).isBlank() )
-                    count++;
-
-                if ( count > 1 )
-                    return false;
-            }
-        }
-        return true;
+        return chessBoard.isGoal( chessBoard );
     }
 
 }
